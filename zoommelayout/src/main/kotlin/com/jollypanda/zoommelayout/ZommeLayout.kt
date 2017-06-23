@@ -47,38 +47,51 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
     private fun setListeners() {
         val scaleDetector = ScaleGestureDetector(context, this)
         setOnTouchListener { _, motionEvent ->
-            when (motionEvent.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    if (scale >= MIN_ZOOM) {
-                        state = State.DRAG
+            motionEvent.let {
+                when (motionEvent.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
                         startX = motionEvent.x - prevDx
                         startY = motionEvent.y - prevDy
                     }
-                }
 
-                MotionEvent.ACTION_MOVE -> {
-                    if (state == State.DRAG) {
+                    MotionEvent.ACTION_MOVE -> {
                         dx = motionEvent.x - startX
                         dy = motionEvent.y - startY
+
+
+                        if (state == State.ZOOM) {
+
+                        } else {
+
+                        }
                     }
-                }
 
-                MotionEvent.ACTION_UP -> {
-                    state = State.CALM
-                    prevDx = dx
-                    prevDy = dy
-                }
+                    MotionEvent.ACTION_UP -> {
+                        prevDx = dx
+                        prevDy = dy
 
-                MotionEvent.ACTION_POINTER_DOWN -> {
-                    state = State.ZOOM
-                }
+                        if (Math.abs(dx) > 3 || Math.abs(dy) > 3)
+                            return@let
 
-                MotionEvent.ACTION_POINTER_UP -> {
-                    state = State.DRAG
-                }
+                        if (state == State.ZOOM)
+                            return@let
 
-                else -> {  }
+                        // TODO try to get layout here
+                        state = State.CALM
+                    }
+
+                    MotionEvent.ACTION_POINTER_DOWN -> {
+                        state = State.ZOOM
+                    }
+
+                    MotionEvent.ACTION_POINTER_UP -> {
+                        state = State.DRAG
+                    }
+
+                    else -> {  }
+                }
             }
+
             scaleDetector.onTouchEvent(motionEvent)
 
             if (state == State.DRAG && scale >= MIN_ZOOM || state == State.ZOOM) {
@@ -117,5 +130,7 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
         return true
     }
 
-
+    override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+        return true
+    }
 }
