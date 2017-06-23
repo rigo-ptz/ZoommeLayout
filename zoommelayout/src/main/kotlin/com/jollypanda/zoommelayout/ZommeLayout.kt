@@ -66,23 +66,23 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
         setOnTouchListener { _, motionEvent ->
             motionEvent.let {
                 when (motionEvent.actionMasked) {
-                   /* MotionEvent.ACTION_DOWN -> {
-                        Log.e("LISTENER", "ACTION_DOWN")
-                        startX = motionEvent.x - prevDx
-                        startY = motionEvent.y - prevDy
-                    }*/
+                   /* MotionEvent.ACTION_DOWN ->  handled in Intercept */
 
                     MotionEvent.ACTION_MOVE -> {
-                        Log.e("LISTENER", "ACTION_MOVE")
-                        dx = motionEvent.x - startX
-                        dy = motionEvent.y - startY
+                        if (state != State.SCALE) {
+                            Log.e("LISTENER", "ACTION_MOVE")
+                            dx = motionEvent.x - startX
+                            dy = motionEvent.y - startY
+                        }
                     }
 
                     MotionEvent.ACTION_UP -> {
-                        Log.e("LISTENER", "ACTION_UP")
-                        prevDx = dx
-                        prevDy = dy
-                        state = State.CALM
+                        if (state != State.SCALE) {
+                            Log.e("LISTENER", "ACTION_UP")
+                            prevDx = dx
+                            prevDy = dy
+                            state = State.CALM
+                        }
                     }
 
                     MotionEvent.ACTION_POINTER_DOWN -> {
@@ -99,31 +99,17 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
                 }
             }
 
-
-
-//            if (state == State.DRAG && scale >= MIN_ZOOM || state == State.ZOOM) {
-                val maxDx = Math.abs((screenWidth - child.width * scale) / 2)
-                val maxDy = Math.abs((screenHeight - child.height * scale) / 2)
-                dx = Math.min(Math.max(dx, -maxDx), maxDx)
-                dy = Math.min(Math.max(dy, -maxDy), maxDy)
-            if (dy > 0)
-                dy = 0f
+            val maxDx = Math.abs((screenWidth - child.width * scale) / 2)
+            val maxDy = Math.abs((screenHeight - child.height * scale) / 2)
+            dx = Math.min(Math.max(dx, -maxDx), maxDx)
+            dy = Math.min(Math.max(dy, -maxDy), maxDy).let { if (it > 0f) 0f else it }
             Log.e("MOTION EVENT", "maxDx = $maxDx maxDy = $maxDy dx = $dx dy = $dy")
-//                applyScaleAndTranslation()
-//            }
 
             scaleDetector.onTouchEvent(motionEvent)
             gestureDetector.onTouchEvent(motionEvent)
 
             return@setOnTouchListener true
         }
-    }
-
-    private fun applyScaleAndTranslation() {
-        child.scaleX = scale
-        child.scaleY = scale
-        child.translationX = dx
-        child.translationY = dy
     }
 
     override fun onScaleBegin(detector: ScaleGestureDetector?) = true
@@ -133,14 +119,16 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
     override fun onScale(detector: ScaleGestureDetector?): Boolean {
         Log.e("EVENT", "ON SCALE")
         state = State.SCALE
-//        val scaleFactor = detector?.scaleFactor ?: 1f
-//        if (previousScaleFactor == 0f || Math.signum(scaleFactor) == Math.signum(previousScaleFactor)) {
-//            scale *= scaleFactor
-//            scale = Math.max(MIN_ZOOM, Math.min(scale, MAX_ZOOM))
-//            previousScaleFactor = scaleFactor
-//        } else {
-//            previousScaleFactor = 0f
-//        }
+        val scaleFactor = detector?.scaleFactor ?: 1f
+        if (previousScaleFactor == 0f || Math.signum(scaleFactor) == Math.signum(previousScaleFactor)) {
+            scale *= scaleFactor
+            scale = Math.max(MIN_ZOOM, Math.min(scale, MAX_ZOOM))
+            previousScaleFactor = scaleFactor
+        } else {
+            previousScaleFactor = 0f
+        }
+        child.scaleX = scale
+        child.scaleY = scale
         return true
     }
 
@@ -163,17 +151,24 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
             val dInterceptY = ev.y - touchInterceptY
             if (Math.abs(dInterceptX) > scaledTouchSlop || Math.abs(dInterceptY) > scaledTouchSlop) {
                 state = State.SCROLL
-                Log.e("ACTION_MOVE", "TRUE")
                 parent.requestDisallowInterceptTouchEvent(true)
                 return true
             } else {
                 state = State.CALM
-                Log.e("ACTION_MOVE", "false")
                 parent.requestDisallowInterceptTouchEvent(false)
                 return false
             }
         }
-        Log.e("sdgsgsd", "fgdgdgdfgdfg")
+        if (event == MotionEvent.ACTION_POINTER_DOWN) {
+            state = State.SCALE
+            parent.requestDisallowInterceptTouchEvent(true)
+            return true
+        }
+        if (event == MotionEvent.ACTION_POINTER_UP) {
+            state = State.SCROLL
+            parent.requestDisallowInterceptTouchEvent(true)
+            return true
+        }
         parent.requestDisallowInterceptTouchEvent(false)
         return false
     }
