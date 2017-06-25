@@ -76,13 +76,11 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
                    /* MotionEvent.ACTION_DOWN ->  handled in Intercept */
 
                     MotionEvent.ACTION_MOVE -> {
-//                        if (state != State.SCALE) {
-//                            Log.e("LISTENER", "ACTION_MOVE")
+//                           Log.e("LISTENER", "ACTION_MOVE")
                             dx = motionEvent.x - startX
                             dy = motionEvent.y - startY
                             Log.e("XXX", "event_x = ${motionEvent.x} startY = ${startX} dy = $dx")
                             Log.e("YYY", "event_y = ${motionEvent.y} startY = ${startY} dy = $dy")
-//                        }
                     }
 
                     MotionEvent.ACTION_UP -> {
@@ -101,8 +99,6 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
 //                        Log.e("LISTENER", "ACTION_POINTER_UP")
                         state = State.SCROLL
                         scaleWasDone = false
-//                        dy = 0f
-//                        prevDy = 0f
                     }
 
                     else -> {  }
@@ -117,85 +113,25 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
     }
 
     private fun calculateState() {
-        /*Log.e("CHILD", "child Y = ${child.y}")
-        Log.e("CHILD", "child PIVOT Y = ${child.pivotY}")
-        Log.e("CHILD", "child SCALE Y = ${child.scaleY}")
-        Log.e("CHILD", "child TRANSLATION Y ${child.translationY}")
-        Log.e("CHILD", "child SCROLL Y ${child.scrollY}")
-        Log.e("CHILD", "child scale ${scale}")
-        Log.e("CHILD", "child HEIGHT ${childInitHeight}")*/
-
         val (topOffset, bottomOffset) = getOffsetRelativeToThis()
 
         val maxDx = Math.abs((thisWidth - childInitWidth * scale) / 2)
         dx = Math.min(Math.max(dx, -maxDx), maxDx)
         Log.e("XXX", "maxDx = $maxDx  dx = $dx")
-//        dy = Math.min(Math.max(dy, -maxDy), maxDy)
-//        val maxDy = (child.height - child.height / scale) / 2 * scale
-
-//        val maxDx = Math.abs((screenWidth - childInitWidth * scale) / 2)
-//        dx = Math.min(Math.max(dx, -maxDx), maxDx)
-
 
         Log.e("YYY", "screenHeight = ${thisHeight}  childInitHeight = $childInitHeight}")
         val maxDy = Math.abs((thisHeight  - childInitHeight * scale) / 2)
         val maxInitDy = Math.abs((thisHeight - childInitHeight) / 2f)
-//        Log.e("MOTION EVENT", "PRE maxDx = $maxDx maxDy = $maxDy dx = $dx dy = $dy")
 
-
-
-//        dy = Math.min(Math.max(dy, -maxDy), maxDy)
         Log.e("YYY", "maxDy = $maxDy  dy = $dy maxDy - dy = ${maxDy - Math.abs(dy)} maxInitDy = ${maxInitDy} ")
         Log.e("YYY", "maxDy - maxInitDy = ${maxDy - maxInitDy}")
 
         if (dy + maxInitDy > maxDy)
             dy = maxDy - maxInitDy
 
-//        if (dy - maxDy < maxDy)
-//            dy = -maxDy - maxInitDy
-
         if (dy + maxInitDy < maxDy * -1)
             dy = -maxDy - maxInitDy
 
-       /* if (scale == 1f) {
-            if (dy > 0f) {
-                dy = 0f
-            } else
-                if (Math.abs(dy) > maxDy * 2)
-                    dy = (screenHeight - childInitHeight).toFloat()
-        } else {
-            if (dy + maxInitDy > maxDy)
-                dy = maxDy - maxInitDy
-
-        }*/
-        /*dy -= maxDy * 2
-        Log.e("YYY", " - dy = $dy")*/
-
-       /* val maxDy = Math.abs((screenHeight - childInitHeight * scale))
-         if (scale == 1f) {
-            if (dy > 0f) {
-                dy = 0f
-            } else
-                if (Math.abs(dy) > maxDy)
-                    dy = (screenHeight - childInitHeight).toFloat()
-        } else {
-            if (topOffset > 0f) {
-                dy = prevDy
-            }
-//            if (bottomOffset >= screenHeight) {
-//                dy = bottomOffsetAfterScale.toFloat()
-//            }
-        }*/
-//        dy = Math.min(Math.max(dy, -maxDy), maxDy) - Math.abs((screenHeight - childInitHeight * scale))
-
-
-
-//        Log.e("MOTION EVENT", " maxDy = $maxDy  dy = $dy")
-
-
-//        dy = Math.min(Math.max(dy, -maxDy), maxDy).let { if (it > 0f && scale == 1f) 0f else it }
-//        dy = Math.max(Math.max(dy, -maxDy), maxDy)
-//        Log.e("MOTION EVENT", "POST maxDx = $maxDx maxDy = $maxDy dx = $dx dy = $dy")
     }
 
     private fun getOffsetRelativeToThis(): Pair<Int, Int> {
@@ -204,7 +140,6 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
         offsetDescendantRectToMyCoords(child, offsetViewBounds)
         val relativeTop = offsetViewBounds.top
         val relativeBottom = offsetViewBounds.bottom
-//        Log.e("RELATIVE", "TOP = $relativeTop BOTTOM = $relativeBottom DY = $dy SCREEN = $screenHeight")
         return Pair(relativeTop, relativeBottom)
     }
 
@@ -235,16 +170,6 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
         if (event == MotionEvent.ACTION_DOWN)  {
             touchInterceptX = ev.x
             touchInterceptY = ev.y
-
-            /*if (scaleWasDone) {
-                dy = 0f
-                prevDy = 0f
-                scaleWasDone = false
-                Log.e("SCALE WAS DONE", "!!!!!!!!!!!!!!!!!!!!!!")
-                val (topOffset, bottomOffset) = getOffsetRelativeToThis()
-                topOffsetAfterScale = topOffset
-                bottomOffsetAfterScale = bottomOffset
-            }*/
 
             startX = ev.x - prevDx
             startY = ev.y - prevDy
