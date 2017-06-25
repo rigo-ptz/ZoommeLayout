@@ -20,32 +20,17 @@
                 <Button
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:text="TOP"
                     android:layout_weight="1"/>
                 <Button
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:text="TOP"
                     android:layout_weight="1"/>
                 <Button
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"/>
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"/>
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:text="TOP"
                     android:layout_weight="1"/>
             </LinearLayout>
 
@@ -262,6 +247,27 @@
                 <Button
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="BOTTOM"
+                    android:layout_weight="1"/>
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="BOTTOM"
+                    android:layout_weight="1"/>
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="BOTTOM"
                     android:layout_weight="1"/>
             </LinearLayout>
         </LinearLayout>

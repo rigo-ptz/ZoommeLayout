@@ -1,12 +1,12 @@
 package com.jollypanda.zoommelayout
 
 import android.content.Context
+import android.graphics.Rect
 import android.support.v4.view.MotionEventCompat
 import android.util.AttributeSet
 import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
-
 
 
 /**
@@ -44,11 +44,16 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
     private var prevDx = 0f
     private var prevDy = 0f
 
+    private var topOffsetAfterScale = 0
+    private var bottomOffsetAfterScale = 0
+
     private val child: View by lazy { getChildAt(0) }
+    private val childInitHeight: Int by lazy { getChildAt(0).height }
+    private val childInitWidth: Int by lazy { getChildAt(0).width }
 
-    val screenHeight by lazy { resources.displayMetrics.heightPixels }
+    val thisHeight by lazy { height }
 
-    val screenWidth by lazy { resources.displayMetrics.widthPixels }
+    val thisWidth by lazy { width }
 
     var vc = ViewConfiguration.get(context)
     private val scaledTouchSlop = vc.scaledTouchSlop
@@ -60,6 +65,8 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
         setListeners()
     }
 
+    private var scaleWasDone = false
+
     private fun setListeners() {
         val scaleDetector = ScaleGestureDetector(context, this)
         val gestureDetector = GestureDetector(context, this)
@@ -69,42 +76,39 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
                    /* MotionEvent.ACTION_DOWN ->  handled in Intercept */
 
                     MotionEvent.ACTION_MOVE -> {
-                        if (state != State.SCALE) {
-                            Log.e("LISTENER", "ACTION_MOVE")
+//                        if (state != State.SCALE) {
+//                            Log.e("LISTENER", "ACTION_MOVE")
                             dx = motionEvent.x - startX
                             dy = motionEvent.y - startY
-                        }
+                            Log.e("XXX", "event_x = ${motionEvent.x} startY = ${startX} dy = $dx")
+                            Log.e("YYY", "event_y = ${motionEvent.y} startY = ${startY} dy = $dy")
+//                        }
                     }
 
                     MotionEvent.ACTION_UP -> {
-                        if (state != State.SCALE) {
-                            Log.e("LISTENER", "ACTION_UP")
-                            prevDx = dx
-                            prevDy = dy
-                            state = State.CALM
-                        }
+//                        Log.e("LISTENER", "ACTION_UP")
+                        prevDx = dx
+                        prevDy = dy
+                        state = State.CALM
                     }
 
                     MotionEvent.ACTION_POINTER_DOWN -> {
-                        Log.e("LISTENER", "ACTION_POINTER_DOWN")
+//                        Log.e("LISTENER", "ACTION_POINTER_DOWN")
                         state = State.SCALE
                     }
 
                     MotionEvent.ACTION_POINTER_UP -> {
-                        Log.e("LISTENER", "ACTION_POINTER_UP")
+//                        Log.e("LISTENER", "ACTION_POINTER_UP")
                         state = State.SCROLL
+                        scaleWasDone = false
+//                        dy = 0f
+//                        prevDy = 0f
                     }
 
                     else -> {  }
                 }
             }
-
-            val maxDx = Math.abs((screenWidth - child.width * scale) / 2)
-            val maxDy = Math.abs((screenHeight - child.height * scale) / 2)
-            dx = Math.min(Math.max(dx, -maxDx), maxDx)
-            dy = Math.min(Math.max(dy, -maxDy), maxDy).let { if (it > 0f) 0f else it }
-            Log.e("MOTION EVENT", "maxDx = $maxDx maxDy = $maxDy dx = $dx dy = $dy")
-
+            calculateState()
             scaleDetector.onTouchEvent(motionEvent)
             gestureDetector.onTouchEvent(motionEvent)
 
@@ -112,12 +116,104 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
         }
     }
 
+    private fun calculateState() {
+        /*Log.e("CHILD", "child Y = ${child.y}")
+        Log.e("CHILD", "child PIVOT Y = ${child.pivotY}")
+        Log.e("CHILD", "child SCALE Y = ${child.scaleY}")
+        Log.e("CHILD", "child TRANSLATION Y ${child.translationY}")
+        Log.e("CHILD", "child SCROLL Y ${child.scrollY}")
+        Log.e("CHILD", "child scale ${scale}")
+        Log.e("CHILD", "child HEIGHT ${childInitHeight}")*/
+
+        val (topOffset, bottomOffset) = getOffsetRelativeToThis()
+
+        val maxDx = Math.abs((thisWidth - childInitWidth * scale) / 2)
+        dx = Math.min(Math.max(dx, -maxDx), maxDx)
+        Log.e("XXX", "maxDx = $maxDx  dx = $dx")
+//        dy = Math.min(Math.max(dy, -maxDy), maxDy)
+//        val maxDy = (child.height - child.height / scale) / 2 * scale
+
+//        val maxDx = Math.abs((screenWidth - childInitWidth * scale) / 2)
+//        dx = Math.min(Math.max(dx, -maxDx), maxDx)
+
+
+        Log.e("YYY", "screenHeight = ${thisHeight}  childInitHeight = $childInitHeight}")
+        val maxDy = Math.abs((thisHeight  - childInitHeight * scale) / 2)
+        val maxInitDy = Math.abs((thisHeight - childInitHeight) / 2f)
+//        Log.e("MOTION EVENT", "PRE maxDx = $maxDx maxDy = $maxDy dx = $dx dy = $dy")
+
+
+
+//        dy = Math.min(Math.max(dy, -maxDy), maxDy)
+        Log.e("YYY", "maxDy = $maxDy  dy = $dy maxDy - dy = ${maxDy - Math.abs(dy)} maxInitDy = ${maxInitDy} ")
+        Log.e("YYY", "maxDy - maxInitDy = ${maxDy - maxInitDy}")
+
+        if (dy + maxInitDy > maxDy)
+            dy = maxDy - maxInitDy
+
+//        if (dy - maxDy < maxDy)
+//            dy = -maxDy - maxInitDy
+
+        if (dy + maxInitDy < maxDy * -1)
+            dy = -maxDy - maxInitDy
+
+       /* if (scale == 1f) {
+            if (dy > 0f) {
+                dy = 0f
+            } else
+                if (Math.abs(dy) > maxDy * 2)
+                    dy = (screenHeight - childInitHeight).toFloat()
+        } else {
+            if (dy + maxInitDy > maxDy)
+                dy = maxDy - maxInitDy
+
+        }*/
+        /*dy -= maxDy * 2
+        Log.e("YYY", " - dy = $dy")*/
+
+       /* val maxDy = Math.abs((screenHeight - childInitHeight * scale))
+         if (scale == 1f) {
+            if (dy > 0f) {
+                dy = 0f
+            } else
+                if (Math.abs(dy) > maxDy)
+                    dy = (screenHeight - childInitHeight).toFloat()
+        } else {
+            if (topOffset > 0f) {
+                dy = prevDy
+            }
+//            if (bottomOffset >= screenHeight) {
+//                dy = bottomOffsetAfterScale.toFloat()
+//            }
+        }*/
+//        dy = Math.min(Math.max(dy, -maxDy), maxDy) - Math.abs((screenHeight - childInitHeight * scale))
+
+
+
+//        Log.e("MOTION EVENT", " maxDy = $maxDy  dy = $dy")
+
+
+//        dy = Math.min(Math.max(dy, -maxDy), maxDy).let { if (it > 0f && scale == 1f) 0f else it }
+//        dy = Math.max(Math.max(dy, -maxDy), maxDy)
+//        Log.e("MOTION EVENT", "POST maxDx = $maxDx maxDy = $maxDy dx = $dx dy = $dy")
+    }
+
+    private fun getOffsetRelativeToThis(): Pair<Int, Int> {
+        val offsetViewBounds = Rect()
+        child.getHitRect(offsetViewBounds)
+        offsetDescendantRectToMyCoords(child, offsetViewBounds)
+        val relativeTop = offsetViewBounds.top
+        val relativeBottom = offsetViewBounds.bottom
+//        Log.e("RELATIVE", "TOP = $relativeTop BOTTOM = $relativeBottom DY = $dy SCREEN = $screenHeight")
+        return Pair(relativeTop, relativeBottom)
+    }
+
     override fun onScaleBegin(detector: ScaleGestureDetector?) = true
 
     override fun onScaleEnd(detector: ScaleGestureDetector?) {}
 
     override fun onScale(detector: ScaleGestureDetector?): Boolean {
-        Log.e("EVENT", "ON SCALE")
+//        Log.e("EVENT", "ON SCALE")
         state = State.SCALE
         val scaleFactor = detector?.scaleFactor ?: 1f
         if (previousScaleFactor == 0f || Math.signum(scaleFactor) == Math.signum(previousScaleFactor)) {
@@ -133,16 +229,27 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
-        Log.e("EVENT", "ON INTERCEPT TOUCH")
+//        Log.e("EVENT", "ON INTERCEPT TOUCH")
         val event = MotionEventCompat.getActionMasked(ev)
 
         if (event == MotionEvent.ACTION_DOWN)  {
             touchInterceptX = ev.x
             touchInterceptY = ev.y
 
+            /*if (scaleWasDone) {
+                dy = 0f
+                prevDy = 0f
+                scaleWasDone = false
+                Log.e("SCALE WAS DONE", "!!!!!!!!!!!!!!!!!!!!!!")
+                val (topOffset, bottomOffset) = getOffsetRelativeToThis()
+                topOffsetAfterScale = topOffset
+                bottomOffsetAfterScale = bottomOffset
+            }*/
+
             startX = ev.x - prevDx
             startY = ev.y - prevDy
         }
+
         if (event == MotionEvent.ACTION_MOVE) {
             if (state == State.SCROLL)
                 return true
@@ -178,23 +285,23 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
     }
 
     override fun onSingleTapUp(event: MotionEvent?): Boolean {
-        Log.e("EVENT", "SINGLE TAP UP")
+//        Log.e("EVENT", "SINGLE TAP UP")
         return true
     }
 
     override fun onDown(p0: MotionEvent?): Boolean {
-        Log.e("EVENT", "ON DOWN")
+//        Log.e("EVENT", "ON DOWN")
         return true
     }
 
     override fun onFling(p0: MotionEvent?, p1: MotionEvent?, p2: Float, p3: Float): Boolean {
         state = State.SCROLL
-        Log.e("EVENT", "ON FLING")
+//        Log.e("EVENT", "ON FLING")
         return true
     }
 
     override fun onScroll(p0: MotionEvent?, p1: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-        Log.e("EVENT", "ON SCROLL : dx = $dx dy = $dy distX = $distanceX distY = $distanceY")
+//        Log.e("EVENT", "ON SCROLL : dx = $dx dy = $dy distX = $distanceX distY = $distanceY")
         state = State.SCROLL
         child.translationX = dx
         child.translationY = dy
@@ -202,6 +309,6 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
     }
 
     override fun onLongPress(p0: MotionEvent?) {
-        Log.e("EVENT", "ON LONG PRESS")
+//        Log.e("EVENT", "ON LONG PRESS")
     }
 }
