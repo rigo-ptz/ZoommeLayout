@@ -119,9 +119,15 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
         dx = Math.min(Math.max(dx, -maxDx), maxDx)
         Log.e("XXX", "maxDx = $maxDx  dx = $dx")
 
-        Log.e("YYY", "screenHeight = ${thisHeight}  childInitHeight = $childInitHeight}")
-        val maxDy = Math.abs((thisHeight  - childInitHeight * scale) / 2)
-        val maxInitDy = Math.abs((thisHeight - childInitHeight) / 2f)
+        val maxDy: Float
+        val maxInitDy: Float
+        if (childInitHeight > thisWidth) {
+            maxDy = Math.abs((thisHeight - childInitHeight * scale) / 2f)
+            maxInitDy = Math.abs((thisHeight - childInitHeight) / 2f)
+        } else {
+            maxDy = Math.abs((childInitHeight * scale) / 2f)
+            maxInitDy = Math.abs((childInitHeight) / 2f)
+        }
 
         Log.e("YYY", "maxDy = $maxDy  dy = $dy maxDy - dy = ${maxDy - Math.abs(dy)} maxInitDy = ${maxInitDy} ")
         Log.e("YYY", "maxDy - maxInitDy = ${maxDy - maxInitDy}")
@@ -129,8 +135,12 @@ class ZommeLayout @JvmOverloads constructor(context: Context,
         if (dy + maxInitDy > maxDy)
             dy = maxDy - maxInitDy
 
-        if (dy + maxInitDy < maxDy * -1)
-            dy = -maxDy - maxInitDy
+        if (childInitHeight > thisWidth) {
+            if (dy + maxInitDy < maxDy * -1f)
+                dy = -maxDy - maxInitDy
+        } else {
+            dy = Math.min(Math.max(dy, -maxDy), maxDy)
+        }
 
     }
 
